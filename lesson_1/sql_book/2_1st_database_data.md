@@ -1,0 +1,453 @@
+## 1. Add Data with INSERT
+
+The reason we add schema or structure to tables for that matter is to store data in an organized way. We use Data Manipulation language (DML) to add, query, change and remove data.
+
+
+
+### Data and DML
+
+DML is a sublanguage of SQL that enables us to write Data Manipulation Statements using:
+
+- keywords
+- clauses
+- syntax
+
+DML statements can be broken down into 4 different types:
+
+1. `INSERT` - add new data into a database table
+2. `SELECT` - aka queries, retrieve data from an existing table
+3. `UPDATE` - update existing data in a database table
+4. `DELETE` - delete exisiting data from a database table
+
+#### CRUD
+
+The actions performed by the above 4 types of DML is often known as CRUD. It's an acronym that stands for:
+
+- **C**reate (`INSERT`)
+- **R**ead (`SELECT`)
+- **U**pdate (`UPDATE`)
+- **D**elete (`DELETE`)
+
+Each DML type correspond to a CRUD operation. Web apps that provide an interface to perform these actions are referred to as CRUD apps.
+
+
+
+### Insertion Statement Syntax
+
+the general form of an `INSERT` SQL statement:
+
+```sqlite
+INSERT INTO table_name (column1_name, column2_name, ...)
+	VALUES (data_column1m data_column2, ...);
+```
+
+insert statements require 3 pieces of information:
+
+1. The table name 
+2. The names of the columns we're adding data to
+3. The values we wish to store in said columns
+
+- If you don't specify a column for data a null or default value will be added to the record you wish to store
+- for each column specified you MUST add a value to it in the `VALUES` clause otherwise itll raise an error
+- if you `INSERT` a `NULL` value into a `boolean` type it will insert `NULL` regardless. You don't want to practice this as `boolean` by nature has only 2 values: `true` or `false`. This is called the Three State Boolean problem or the Three Valued-logic problem.
+
+
+
+### Adding rows of data
+
+- columns give structure (schema) to our table
+- rows (or tuples) contain the data of the table
+  - each row in a table is an *individual entity* aka a record
+
+#### add a row of data
+
+```sqlite
+sql_book=# \d users
+                   Table "public.users"
+   Column   |            Type             |   Modifiers
+------------+-----------------------------+---------------
+ id         | integer                     | not null
+ full_name  | character varying(25)       | not null
+ enabled    | boolean                     | default true
+ last_login | timestamp without time zone | default now()
+```
+
+to add a row into the above table we could either make sure to supply a value for each column:
+
+```sqlite
+INSERT INTO users 
+	VALUES (DEFAULT, 'John Smith', false, DEFAULT);
+```
+
+or specify the columns:
+
+```sqlite
+INSERT INTO users (full_name, enabled)
+	VALUES ('John Smith', false);
+```
+
+The value order must match the columns order and by specifying columns its much easier to see each value line up
+
+```sqlite
+INSERT 0 1
+```
+
+The above is the response we get back:
+
+- `0` refers to the `oid`
+- `1` is how many rows were inserted
+
+#### add multiple rows of data
+
+you don't have to execute a separate `INSERT` statement for every piece of data inserted - we can use a single statement to add multiple rows of data to a table:
+
+```sqlite
+INSERT INTO users (full_name)
+VALUES ('Jane Smith'), ('Harry Potter');
+```
+
+- its good practice to have every row on a separate line to clearly see what values you're adding to those rows
+- postgreSQL adds rows in the order that was specified in our statement
+
+
+
+### Constraints and adding Data
+
+constraints are concerned with controlling what data can be added to a table
+
+#### DEFAULT values
+
+if a value isn't specified in an `INSERT` statement, then the `DEFAULT` value will be used instead.
+
+#### NOT NULL constraints
+
+`NOT NULL` constraints are useful that when a new row is added a value must be specified for that column.
+
+if we try the following:
+
+```sqlite
+INSERT INTO users (id, enabled) VALUES (1, false);
+```
+
+We get the following error:
+
+```sqlite
+ERROR:  null value in column "full_name" violates not-null constraint
+DETAIL:  Failing row contains (1, null, f, 2017-10-18 12:20:02.067639).
+```
+
+- if our `INSERT` statement is missing a column (with no `DEFAULT` constraint) SQL will try to insert `null` into that missing column. 
+- Since we have a `NOT NULL` on the `full_name` column that `null` is rejected and an error is raised.
+
+#### UNIQUE constraints
+
+ensures you cannot have duplicate values in that column. 
+
+- Having an id column in a database is useful. It's used to store unique identifiers per row of data
+- we have to make sure that each id is `UNIQUE` for it to work properly
+- We we added the `UNIQUE` constraint to the `id` column an index called `users_id_key` is created. 
+- The next value that we insert into the id column is checked against existing values in the `users_id_key` index:
+- if the value exists we can't insert any duplicate values into that column
+
+```sqlite
+ERROR:  duplicate key value violates unique constraint "unique_id"
+DETAIL:  Key (id)=(1) already exists.
+```
+
+#### CHECK constraints
+
+useful when we want to check values inserted against some specified pre condition
+
+if we want to ensure a string isn't empty:
+
+```sqlite
+ALTER TABLE users ADD CHECK (full_name <> '');
+```
+
+`<>` is a 'not equal to' operator. If we were to insert the following into the `full_name` column we raise an error:
+
+```sqlite
+sql_book=# INSERT INTO users (id, full_name) VALUES (4, '');
+ERROR:  new row for relation "users" violates check constraint "users_full_name_check"
+DETAIL:  Failing row contains (4, , t, 2017-10-25 10:32:21.521183).
+```
+
+note: a name wasn't specified for the constraint and was left up to PostgreSQL
+
+#### Quotations
+
+if any word has a single quote mark or an apostrophe, it must be escaped with a second quote mark:
+
+so `'O'Leary'` becomes `'O''Leary'`
+
+### Summary
+
+1 of 4 types of DML interaction: `INSERT`
+
+- adding data
+- creating data
+- `INSERT` statement syntax
+- Adding single and multiple rows of data
+- Constraints to control what data is added:
+  - `DEFAULT`
+  - `NOT NULL` constraints
+  - `UNIQUE` constraints
+  - `CHECK` constraints
+
+| Command                                                      | Notes                                                        |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `INSERT INTO` table_name (column1_name, column2_name, ...) `VALUES` (data_for_column1, data_for_column2, ...); | creates a new record in *table_name* with the specified columns and their associated values. |
+| `ALTER TABLE` table_name `ADD UNIQUE` (column_name);         | Adds a constraint to `table_name` that prevent non-unique values from being added to the table for `column_name` |
+| `ALTER TABLE` table_name `ADD CHECK` (expression);           | Adds a constraint to `table_name` that prevents new rows from being added if they don't pass a *check* based on a specified expression. |
+
+
+
+
+
+## 2. Select Queries
+
+use `SELECT` to select or *query* data in specific ways. `SELECT` applies to the 'R' in CRUD - Read. And is considered to be the most common operation in database apps.  
+
+### Select Query Syntax
+
+The breakdown of a general `SELECT` statement is as follows:
+
+```sqlite
+SELECT [*, (column1, column2, ...)]
+FROM table WHERE (condition);
+```
+
+```sqlite
+SELECT enabled, full_name 
+FROM users WHERE id < 2;
+
+ enabled |  full_name
+---------+--------------
+ f       | John Smith
+(1 row)
+```
+
+`SELECT` statement is very flexible and can be used with a number of clauses.
+
+There are 3 parts to the above statement:
+
+1. The column list: 
+   - must sit between `SELECT` and `FROM`
+   - can be a list of columns or a wildcard operator `*`
+   - The order of columns in the response is based on the order of the column names in the statement
+2. The table name:
+   - comes after the `FROM` clause
+   - table could exist in the database or could be a virtual table
+3. The `WHERE` clause: 
+   - comes after the table name
+   - condition usually includes one of the columns you are querying
+
+
+
+#### Identifiers and keywords
+
+```sqlite
+SELECT enabled, full_name 
+FROM users WHERE id < 2;
+```
+
+in the example above:
+
+- `enabled`, `full_name` and `users` are called identifiers as they identify columns or tables
+- SQL is not a case-sensitive language 
+  - anything that is isn't a keyword (keywords being `select` `from` `where`) is considered an identifier
+- with this in mind try to avoid column or table names that are reserved keywords
+- If its unavoidable double quote the identifier in the statement
+  - eg. `year` is a reserved word so we must type `"year"` if we want it as an identifier
+
+### `ORDER BY`
+
+displays the result of a query in a particular sort order
+
+eg. sorting blog posts from most recent on a website can be done with a query to order by the time of creation in descending order.
+
+breakdown of an `ORDER_BY` clause is as follows:
+
+```sqlite
+SELECT [*, (column1, column2, ...)]
+FROM table WHERE (condition)
+ORDER BY column_name;
+```
+
+- `ORDER BY` comes after the table name and follows a `WHERE` clause if it is included.
+
+```sqlite
+SELECT full_name, enabled FROM users
+ORDER BY enabled;
+
+  full_name   | enabled
+--------------+---------
+ John Smith   |  f
+ Jane Smith   |  t
+ Harry Potter |  t
+(3 rows)
+```
+
+- when ordering by boolean, `false` comes before `true` in ascending order
+- Jane and Harry have the same `t` value so their order is arbitrary
+- fine tune your order with `ASC` or `DESC` keywords (`ASC` is default if omitted)
+
+```sqlite
+SELECT full_name, enabled FROM users
+ORDER BY enabled DESC;
+
+  full_name   | enabled
+--------------+---------
+ Jane Smith   |  t
+ Harry Potter |  t
+ John Smith   |  f
+(3 rows)
+```
+
+- to fine tune the ordering you have multiple columns order the results
+- This is done with comma separated expressions in the `ORDER` clause:
+
+```sqlite
+SELECT full_name, enabled FROM users
+ORDER BY enabled DESC, id DESC;
+
+  full_name   | enabled
+--------------+---------
+ Harry Potter |  t
+ Jane Smith   |  t
+ John Smith   |  f
+(3 rows)
+```
+
+- you can use columns or order by outside the list of identifiers mentioned
+- you can set a sort direction for each column when ordering results
+
+### Operators
+
+typically used as part of an expression in a `WHERE` clause, operators are grouped into the following types:
+
+1. comparison
+2. logical
+3. string matching
+
+There are more operators available but the above are the most commonly used operators
+
+#### comparison operators
+
+compares 1 value to another. These values are usually numerical but other data types can be compared.
+
+| Operator     | Description              |
+| :----------- | :----------------------- |
+| `<`          | less than                |
+| `>`          | greater than             |
+| `<=`         | less than or equal to    |
+| `>=`         | greater than or equal to |
+| `=`          | equal                    |
+| `<>` or `!=` | not equal                |
+
+There are also *comparison predicates* that behave like operators but have a special syntax:
+
+- `BETWEEN`
+- `NOT BETWEEN`
+- `IS DISTINCT FROM`
+- `IS NOT DISTINCT FROM`
+- `IS NULL`
+- `IS NOT NULL`
+
+##### NULL
+
+`NULL` by itself represents an unknown value. This means we cannot write something like:
+
+```sqlite
+WHERE column_name = NULL
+```
+
+When comparing with a `NULL` value we must use instead the `IS NULL` comparison predicate
+
+```mysql
+SELECT * FROM my_table WHERE my_column IS NULL;
+```
+
+#### logical operators
+
+give more flexibility to your expressions:
+
+- AND - allows you to combine multiple conditions into a single expression
+- OR - allows you to combine multiple conditions into a single expression
+- NOT - less commonly used
+
+```mysql
+SELECT * FROM users WHERE full_name = 'Harry Potter' OR enabled = 'false';
+```
+
+retrieves 2 rows as it looks for any row where either condition returns true
+
+```mysql
+ id |  full_name   | enabled |         last_login
+----+--------------+---------+----------------------------
+  1 | John Smith   | f       | 2017-10-25 10:26:10.015152
+  3 | Harry Potter | t       | 2017-10-25 10:26:50.295461
+(2 rows)
+```
+
+if AND replaced OR nothing would be retrieved as both conditions must be satisfied to retrieve a row
+
+#### string matching
+
+search for a subset of string data within a column 
+
+if we wanted to check for all users with last name smith we can't check `full_name = smith` as smith is only part of the string. 
+
+Here we can use the `LIKE` operator that follows a WHERE clause if present in a statement
+
+```mysql
+SELECT * FROM users WHERE full_name LIKE '%Smith';
+
+id | full_name  | enabled |         last_login
+----+------------+---------+----------------------------
+ 1 | John Smith | f       | 2017-10-25 10:26:10.015152
+ 2 | Jane Smith | t       | 2017-10-25 10:26:50.295461
+(2 rows)
+```
+
+- the translation reads: match all users that have a full name with any number of characters followed by Smith
+- the `%` is a wildcard character that represents any number of characters based on where it is placed in a string 
+- LIKE is case sensitive: `%Smith` matches `Smith` but not `SMITH` nor `smith`
+- for case-insensitive use `ILIKE %Smith`
+- similarly `%`, `_` represents a single character that comes before after depending where it is placed
+- `SIMILAR TO` is an alternative to `LIKE` except it expects a column to be compared with a regex expression 
+
+### Summary
+
+`SELECT` is the most used statement in SQL. Every database app will display data to users in some way.
+
+| `SELECT` Clause                             | Notes                                                        |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `ORDER BY` column_name [ASC,DESC]           | Orders data selected by a column name inside a table. Data can be ordered either descending or ascending. If not specified the query defaults to ascending |
+| `WHERE` column_name [>,=,<=, <>] value      | Filters result based on a comparison between a column and specified value. |
+| `WHERE` expression1 [AND, OR] expression2   | Filters result based on truthiness of 1 expression AND OR truthiness of another expression |
+| `WHERE` string_column `LIKE` `'%substring'` | Filters result based on if substring is found in a string_columns data and has x characters before or after that string.  Those characters are matched using the wildcard `%` |
+
+
+
+## 3. More on Select
+
+### LIMIT and OFFSET
+
+### DISTINCT
+
+### Functions
+
+### GROUP BY
+
+## 4. Update Data in a Table
+
+### Updating Data
+
+### Deleting Data
+
+### Update vs Delete
+
+### Use Caution
+
+### Summary
