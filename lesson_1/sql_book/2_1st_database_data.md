@@ -432,13 +432,142 @@ id | full_name  | enabled |         last_login
 
 ## 3. More on Select
 
+- how to use functions to process data
+- how data can be grouped together based on various criteria
+- further filter data using `LIMIT` `OFFSET` and `DISTINCT`
+
 ### LIMIT and OFFSET
+
+displaying portions of data as separate 'pages' is a user interface pattern in web apps known as *pagination*. (splitting up pages from one page to the next like a results page)
+
+![pagination example](https://d186loudes4jlv.cloudfront.net/sql/images/more_on_select/launch-school-forum-pagination.png)
+
+`LIMIT` and `OFFSET` are at the heart of how pagination works.
+
+If we only wanted to display 1 user at a time from the data it would work like this:
+
+```sqlite
+SELECT * FROM users LIMIT 1;
+```
+
+We can skip the first row and display the 2nd user using `OFFSET`:
+
+```sqlite
+SELECT * FROM users LIMIT 1 OFFSET 1;
+```
+
+If we need to return multiple results per page we can adjust the `LIMIT` value:
+
+```sql
+SELECT topic, author, publish_date, category, replies_count, likes_count, last_activity_date
+FROM posts LIMIT 12 OFFSET 12;
+```
+
+`LIMIT` is also useful in development when previewing what kind of data would be available rather than returning the whole dataset. 
 
 ### DISTINCT
 
+A common data quality issue is having duplicate data in your tables eg. joining tables together. To deal with duplication we can use the `DISTINCT` clause:
+
+```sql
+SELECT DISTINCT full_name FROM USERS;
+
+ full_name
+--------------
+ John Smith
+ Jane Smith
+ Harry Potter
+(3 rows)
+```
+
+`DISTINCT` is useful when used in conjunction with SQL functions:
+
+```sql
+SELECT count(DISTINCT full_name) FROM users;
+
+ count
+-------
+     3
+(1 row)
+```
+
 ### Functions
 
+A set of commands included as part of the RDBMS which perform operations on fields/data before returning the result.
+
+- Some provide data transformations
+- others return information on the operations carried out
+
+Functions correspond to different types:
+
+1. String
+2. Date/Time
+3. Aggregate
+
+#### String Functions
+
+| Function | Example                                               | Notes                                                        |
+| :------- | :---------------------------------------------------- | :----------------------------------------------------------- |
+| `length` | `SELECT length(full_name) FROM users;`                | This returns the length of every user's name. You could also use `length` in a `WHERE` clause to filter data based on name length. |
+| `trim`   | `SELECT trim(leading ' ' from full_name) FROM users;` | If any of the data in our `full_name` column had a space in front of the name, using the `trim` function like this would remove that leading space. |
+
+#### Date/Time Functions
+
+| Function    | Example                                                      | Notes                                                        |
+| :---------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| `date_part` | `SELECT full_name, date_part('year', last_login) FROM users;` | `date_part` allow us to view a table that only contains a part of a user's timestamp that we specify. The above query allows us to see each user's name along with the year of the `last_login` date. Sometimes having date/time data down to the second isn't needed |
+| `age`       | `SELECT full_name, age(last_login) FROM users;`              | The `age` function, when passed a single `timestamp` as an argument, calculates the time elapsed between that timestamp and the current time. The above query allows us to see how long it has been since each user last logged in. |
+
+#### Aggregate Functions
+
+these functions compute a single result from a set of input values and they're useful when we group tables together:
+
+| Function | Example                              | Notes                                                        |
+| :------- | :----------------------------------- | :----------------------------------------------------------- |
+| `count`  | `SELECT count(id) FROM users;`       | Returns the number of values in the column passed in as an argument. This type of function can be very useful depending on the context. We could find the number of users who have enabled an account, or even how many users have certain last names if we use the above statement with other clauses. |
+| `sum`    | `SELECT sum(id) FROM users;`         | Not to be confused with `count`. This *sums* numeric type values for all of the selected rows and returns the total. |
+| `min`    | `SELECT min(last_login) FROM users;` | This returns the lowest value in a column for all of the selected rows. Can be used with various data types such as numeric, date/ time, and string. |
+| `max`    | `SELECT max(last_login) FROM users;` | This returns the highest value in a column for all of the selected rows. Can be used with various data types such as numeric, date/ time, and string. |
+| `avg`    | `SELECT avg(id) FROM users;`         | Returns the average (arithmetic mean) of numeric type values for all of the selected rows. |
+
 ### GROUP BY
+
+We often need to combine data results to form more meaningful information. 
+
+if we wanted to count the number users who have accounts that are / aren't enabled
+
+```sql
+SELECT enabled, count(id) FROM users GROUP BY enabled;
+
+ enabled | count
+---------+-------
+ f       |     1
+ t       |     4
+(2 rows)
+```
+
+```sql
+SELECT enabled, full_name, count(id) FROM users GROUP BY enabled;   -- full_name is not grouped or
+ERROR:  column "users.full_name" must appear in the GROUP BY clause or be used in an aggregate function
+```
+
+- When using aggregate functions you must include the columns you specified in the `GROUP BY` clause
+- or be the result of an aggregate function
+- or the `GROUP BY` clause must be based on the primary key
+- this is to ensure that theres a single value for every column in the result
+
+
+
+### Summary
+
+looked at a number of ways we can make `SELECT` more flexible:
+
+- Retrieving portions of a dataset using `LIMIT` and `OFFSET`
+- Retrieving unique value using `DISTINCT`
+- Using SQL functions to work with data
+- Aggregating data using `GROUP BY`
+
+
 
 ## 4. Update Data in a Table
 
