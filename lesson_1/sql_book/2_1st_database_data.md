@@ -571,12 +571,128 @@ looked at a number of ways we can make `SELECT` more flexible:
 
 ## 4. Update Data in a Table
 
+uses for update / delete operations:
+
+- Change the value of someone's `full_name`
+- Fix a typo
+- Update the enabled column for a specific user
+- Delete an Incorrect entry
+- Update the value of `last_login` when a user logs into the application
+
+
+
 ### Updating Data
+
+To use the update statement:
+
+```sqlite
+UPDATE table_name SET [column_name = value, ... ]
+WHERE (expression);
+```
+
+- This statement could be read as "Set column(s) to these values in a table when an expression evaluates to true"
+- we can specify any table and any number of columns within that table to update its data
+- The `WHERE` clause it optional and if omitted PostgreSQL will update every row in the target table
+  - Because of this the expression to the `WHERE` clause needs to be restrictive / specific enough to only target the rows you want to modify
+  - Test your clause using `SELECT` first before using `UPDATE`
+
+#### update specific rows
+
+`WHERE` lets us update omit the specific rows that meet the condition set in that clause:
+
+```sqlite
+UPDATE users SET enabled = true
+WHERE full_name = 'Harry Potter' OR full_name = 'Jane Smith'
+```
+
+As long as the `WHERE` clause is specific enough we can take advantage of the `id` column and update a single user:
+
+```sqlite
+UPDATE users SET full_name = 'Alice Walker' WHERE id = 2;
+```
+
+#### update all rows
+
+Typically this is fairly unusual and you would want to update specific rows based on some criteria including the `WHERE` clause
+
+eg. if you want to disable all users in response to a security issue:
+
+```sqlite
+UPDATE users SET enabled = false;
+```
+
+![Update All Rows](https://d186loudes4jlv.cloudfront.net/sql/images/update_and_delete_data/updating-data-update-all-rows.png)
+
+
 
 ### Deleting Data
 
+Sometimes it isn't enough to fix a data issue and you may need to delete the row altogether
+
+To use the delete statement:
+
+```sqlite
+DELETE FROM table_name WHERE (expression);
+```
+
+- `WHERE` is used to target specific rows
+
+#### delete specific rows
+
+```sqlite
+DELETE FROM users 
+WHERE full_name = 'Harry Potter' AND id > 3;
+```
+
+- adding the full_name adds extra protection from accidentally typing the wrong id value
+
+#### delete all rows
+
+- It's rare to delete all rows in a table
+- The WHERE clause in a DELETE statement is optional and if omitted **ALL** rows in the table will be deleted
+
+```sql
+DELETE FROM users;
+```
+
+
+
 ### Update vs Delete
+
+- `SET` allows you to update 1 or more rows OR columns
+- `DELETE` only allows you to remove 1 or more rows and not specific data in those rows
+  - its not possible to delete values in rows
+  - We use `NULL` instead to represent a deleted / unknown value 
+
+To display a "deleted value":
+
+```sqlite
+UPDATE table_name SET column_name = NULL
+WHERE (expression);
+```
+
+- we can use `SET =` to assign a `NULL` because it is not being compared to
+- if a column has a `NOT NULL` constraint we can't set the value to `NULL` and an error is thrown
+
+
 
 ### Use Caution
 
+- ideally you do not want to update / delete all the rows in a table
+- If you `UPDATE` / `DELETE` without a `WHERE` clause you *WILL AFFECT THE ENTIRE TABLE*
+- use `SELECT` first to verify the targeted rows you want to `UPDATE` / `DELETE`
+
+
+
 ### Summary
+
+- the U and D in CRUD (updating and deleting)
+
+| Statement                                                    | Notes                                                        |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| UPDATE table_name SET [column_name1 = value1, ...] WHERE (expression); | Update specified fields within a table. The rows updated are dependent on the `WHERE` clause. We may update all rows by leaving out the `WHERE` clause. |
+| DELETE FROM table_name WHERE (expression);                   | Delete rows in the specified table. Which rows are deleted is dependent on the `WHERE` clause. We may delete all rows by leaving out the `WHERE` clause. |
+
+- for a very simple application a single table may be all that needed
+- However majority of the time multiple related tables are required 
+- this is to model the data structure that your app needs

@@ -270,6 +270,11 @@ in our above example:
 - **timestamp:** simple data / time format : yyyy-mm-dd     hh:mm:ss
 - **date:** contains the date but no time
 
+#### boolean true and false
+
+- Although PostgreSQL boolean values display as `t` or `f` in the results of a `SELECT` query, `t` and `f` are not valid literal boolean values unless used in single quote marks: `'t'`, `'f'`. 
+- Other acceptable literals are `true` or `false` without quote marks; or `'t'`, `'true'`, `'y'`, `'yes'`, `'on'`, `'1`' with quote marks for `true`, and `'f'`, `'false'`, `'n'`, `'no'`, `'off'`, `'0'` with quote marks for `false`.
+
 ### Keys and Constraints
 
 Constraints are extremely useful and while they aren't mandatory like data types are, you'll want to add some type of constraint to your columns.
