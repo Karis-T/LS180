@@ -295,14 +295,296 @@ CREATE TABLE checkouts (
 
 ## 2. SQL Joins
 
+now that our data is split across several tables we have to `JOIN` it up before we can `SELECT` related data again.
+
+SQL  handles quries across multiple table using `JOIN`s. `JOIN`s are clauses which link 2 tables together based on the keys that first defined the relationship between the 2 tables. 
+
+There are several types of `JOIN`s:
+
+- `INNER`
+- `LEFT OUTER`
+- `RIGHT OUTER`
+- `FULL OUTER`
+- `CROSS`
+
 ### Join Syntax
+
+standard syntax of a `JOIN` statement:
+
+```sqlite
+SELECT [table_name.column_name1, table_name.column_name2, ...] FROM
+table_name1 join_type JOIN table_name2 ON (join_condition);
+```
+
+- line 1: is the same as `SELECT columns FROM` in previous `SELECT` queries
+  - the difference is the columns are prepended with its table name
+- line 2: to join 1 table to another PostgreSQL needs to know several pieces of info:
+  1. The name of the 1st table
+  2. the type of join to use
+  3. the name of the 2nd table
+  4. the join condition
+     - follows the `ON` keyword
+     - defines the logic with how the row in table 1 is joined to the row in table 2
+     - usually created with the `PRIMARY KEY` from table 1 and the `FOREIGN KEY` from table 2
+
+![Shapes and Colors, separate tables](https://d186loudes4jlv.cloudfront.net/sql/images/table_relationships/joins-explanation-separate-tables.png)
+
+```sqlite
+SELECT colors.color, shapes.shape FROM
+colors JOIN shapes ON colors.id = shapes.color_id;
+```
+
+- line 2: the join condition will look at each `id` value and attempt to match it with the `color_id` value
+  - If there is a match then the 2 rows are joined together to form a new row in a virtual *join table*
+  - since orange isn't used in the `shapes` table, its omitted in the virtual join table
+
+![Shapes and Colors, virtual join table](https://d186loudes4jlv.cloudfront.net/sql/images/joins/joins-explanation-virtual-join-table.png)
+
+- line 1: `SELECT column_list FROM` then selects its columns from this virtual join table shown above
+  - These columns could come from the first or second table
+  - to avoid confusion the table and column name needs to be declared in the column list (`table1.column1`)
+  - select columns from our virtual join table will look like this:
+
+```sqlite
+SELECT colors.color, shapes.shape FROM shapes_colors_join_table;
+```
+
+![Shapes and Colors, resulting data](https://d186loudes4jlv.cloudfront.net/sql/images/joins/joins-explanation-query-result.png)
 
 ### Types of Joins
 
+- add the join type just before the `JOIN` keyword
+
+#### INNER JOIN 
+
+returns a result set that contains the common elements of the tables 
+
+- the intersection where they match on the join condition
+- The most frequently used JOIN
+- It's PostgreSQL's default option if you don't specify a join type
+
+![Users and Addresses](https://d186loudes4jlv.cloudfront.net/sql/images/joins/users-and-addresses.png)
+
+```sqlite
+SELECT users.*, addresses.* FROM users
+INNER JOIN addresses ON (users.id = addresses.user_id);
+```
+
+- Line 2: creates the intersection between the 2 tables
+  - this means that the joined table only has rows that evaluated to true (`5` is omitted as it has no `user_id`)
+- Line 1: selects everything from the `users` table and everything from the `addresses` table to include in the final join table
+
+![Inner Join](https://d186loudes4jlv.cloudfront.net/sql/images/joins/inner-join.png)
+
+- if you wanted to include `Jane Smith` in the results despite not having met the condition we'd need to use an `OUTER JOIN` 
+
+#### LEFT JOIN
+
+- takes **all** the rows from table 1 (defined as the `LEFT` table) and joins it with table 2 
+- `JOIN` is based on the conditions supplied in the parentheses
+- `LEFT JOIN` always includes **all** the rows from the `LEFT` table even if there's no matching rows
+
+```sqlite
+SELECT users.*, addresses.*
+FROM users
+LEFT JOIN addresses
+ON (users.id = addresses.user_id);
+```
+
+![Left Join](https://d186loudes4jlv.cloudfront.net/sql/images/joins/left-join.png)
+
+- In this table `Jane Smith` is included despite the condition
+- Because she doesn't have any matching rows in the `addresses` table all the values in that table are `NULL`
+- `LEFT JOIN` and `LEFT OUTER JOIN` is the same thing (OUTER is often omitted)
+- this is still referred to as an OUTER join to differentiate it from an INNER join
+
+#### RIGHT JOIN
+
+- takes **all** the rows from table 2 are included along with any matching rows from table 1
+
+![Reviews and Books](https://d186loudes4jlv.cloudfront.net/sql/images/joins/reviews-and-books.png)
+
+```sqlite
+SELECT reviews.book_id, reviews.content,
+       reviews.rating, reviews.published_date,
+       books.id, books.title, books.author
+FROM reviews RIGHT JOIN books ON (reviews.book_id = books.id);
+```
+
+![Right Join](https://d186loudes4jlv.cloudfront.net/sql/images/joins/right-join.png)
+
+- the above example displays all reviews and their associated books but it also includes any books that don't have a review
+- Because the last book doesn't have a review all its values are `NULL`
+- `RIGHT JOIN` is also known as `RIGHT OUTER JOIN` 
+
+#### FULL JOIN
+
+- a combination of the `LEFT JOIN` and `RIGHT JOIN` 
+- This join contains all the rows from both tables
+- Where the join condition evaluates to true, the tables contain the data
+- for any row either side where the condition evaluates to false, they're included in the selection anyways, but all its values from the other table are `NULL` 
+
+#### CROSS JOIN
+
+- an uncommon type of join also known as a Cartesian JOIN
+- returns all rows from 1st table crossed with every row from the 2nd table
+- contains every possible combination of rows from the joined tables
+- returns all combinations so therefore doesn't use a join condition nor an `ON` clause
+
+```sqlite
+sql_book=# SELECT * FROM users CROSS JOIN addresses;
+```
+
+![CROSS Join](https://d186loudes4jlv.cloudfront.net/sql/images/joins/cross-join.png)
+
+- in application its very unlikely `CROSS JOIN` will be used
+- most of the time you select rows to return a meaningful result
+- be aware of `CROSS JOINS` as you may occasionally encounter them
+
 ### Multiple Joins
+
+- you can join more than 2 tables together
+- to do so add additional `JOIN` clauses to the `SELECT` statement
+- To join multiple tables there must be a **logical relationship** between the tables involved
+
+to join the `users` `checkouts` and `books` tables:
+
+```sqlite
+SELECT users.full_name, books.title, checkouts.checkout_date FROM users
+INNER JOIN checkouts ON (users.id = checkouts.user_id)
+INNER JOIN books ON (books.id = checkouts.book_id);
+```
+
+- 2  `INNER JOIN`s:
+  - 1 between `users` and `checkouts`
+  - the other between `books` and `checkouts`
+- `JOIN` is implemented using the Primary key of 1 table and the foreign key of the `checkouts` table 
 
 ### Aliasing
 
+- we can cut back the length of queries using aliasing. 
+- Aliasing allows us to specify another name for a column / table 
+- use this name in later parts of the query for more concise syntax
+
+```sqlite
+SELECT u.full_name, b.title, c.checkout_date
+FROM users AS u
+INNER JOIN checkouts AS c ON (u.id = c.user_id)
+INNER JOIN books AS b ON (b.id = c.book_id);
+```
+
+- single letter aliases for our tables and prepend the column names to them - known as 'table aliasing'
+- optional you can remove the `AS` keyword
+  - `FROM users u` is the same as `FROM users AS u`
+
+#### column aliasing
+
+- aliasing allows us to display more meaningful information in our result table too
+
+If we want to display the number of checkouts from the library:
+
+```sqlite
+SELECT count(id) AS "Number of Books Checked Out" FROM checkouts;
+Number of Books Checked Out
+-----------------------------
+                          4
+(1 row)
+```
+
+as opposed to:
+
+```sqlite
+SELECT count(id) FROM checkouts;
+ count
+-------
+     4
+(1 row)
+```
+
 ### Subqueries
 
+while joining is the most common way of working with multiple tables, you can achieve the same results through subqueries.
+
+- the idea is similar to method chaining where the return value is used to invoke another method
+- In this case the return table from the 1st `SELECT` query is used as the condition in another `SELECT` query
+- This is known as nesting / subqueries
+
+![Checkouts table](https://d186loudes4jlv.cloudfront.net/sql/images/joins/checkouts.png)
+
+```sqlite
+SELECT u.full_name FROM users u
+WHERE u.id NOT IN (SELECT c.user_id FROM checkouts c);
+
+  full_name
+-------------
+ Harry Potter
+(1 row)
+```
+
+- the example above shows the user who never checked out a book
+- to do this we find the `users.id` that's not in the `checkouts.user_id` column
+
+- the `NOT IN` clause compares the current `id` to all rows in the return value table (`SELECT u.full_name FROM users u`)
+  - If that `id` isn't part of the return value, the `full_name` for that current row is added to the result
+
+![Nested Query Results](https://d186loudes4jlv.cloudfront.net/sql/images/joins/nested-query.png)
+
+- above shows the return value of `SELECT u.full_name FROM users u`
+- it is a virtual table used in the `NOT IN` clause which we check for our value 
+
+![NOT IN example](https://d186loudes4jlv.cloudfront.net/sql/images/joins/not-in-subquery.png)
+
+- we can compare this virtual table to the `id` column of the `users` table
+- The only one not found in the return value is `id = 3` which is why `Harry Potter` is returned
+
+#### Subquery expressions
+
+The following expressions can be used with sub queries:
+
+- `IN`
+- `NOT IN`
+- `ANY`
+- `SOME`
+- `ALL`
+
+#### Subqueries vs Joins
+
+Subqueries can be used as an alternative to joins as there is more than 1 way to write a query to achieve the same result. This is usually the case with JOINs and subqueries:
+
+```sqlite
+SELECT u.full_name FROM users AS u
+LEFT JOIN checkouts AS c ON (u.id = c.user_id)
+WHERE c.user_id IS NULL;
+
+  full_name
+--------------
+ Harry Potter
+(1 row)
+```
+
+- as a general rule, JOINs are faster to run than subqueries and need to be considered when working with large datasets
+
 ### Summary
+
+- how joins work at a conceptual level
+- different types of joins
+- aliasing and subqueries
+
+- how joins work:
+  - set a condition that compares a value from the 1st table (primary key)
+  - with a value from a 2nd table (foreign key)
+  - if the condition evaluates to true then the row with the 1st value is joined to the row with the  2nd value
+- sometimes the queries can get unwieldy when working with 2 or more `JOIN`s
+- To better manage this we can **alias** table and column names to shorten the query
+  - alias gives context about query results
+- the result of a join query can be obtained using different methods
+- **Subqueries** is another method to query the database and retrieve the same results of similar results - like using a `JOIN` clause
+
+| Join Type | Notes                                                        |
+| :-------- | :----------------------------------------------------------- |
+| INNER     | Combines rows from two tables whenever the join condition is met. |
+| LEFT      | Same as an inner join, except rows from the first table are added to the join table, regardless of the evaluation of the join condition. |
+| RIGHT     | Same as an inner join, except rows from the second table are added to the join table, regardless of the evaluation of the join condition. |
+| FULL      | A combination of left join and right join.                   |
+| CROSS     | Doesn't use a join condition. The join table is the result of matching every row from the first table with the second table, the cross product of all rows across both tables. |
+
