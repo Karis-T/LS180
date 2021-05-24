@@ -50,16 +50,16 @@ template1      |   User    | UTF8     | en_US.UTF-8 | en_US.UTF-8 | User=CTc/Use
                |           |          |             |             | =c/User
 (4 rows)
 
+```
+
 When you create a new database it will be added to this list. 
 
 When you installed `PostgreSQL` you are provided with 4 default databases:
 
-- `template 0`
-- `template 1`
+- `template 0` (used internally by postgres)
+- `template 1` (used internally by postgres)
 - `postgres`
 - `database of logged in user`
-
-
 
 #### Using a SQL statement
 
@@ -68,13 +68,14 @@ while using `createdb` acts as a nice shortcut it is essentially a wrapper to th
 - the utility function `createdb` is executed from the terminal 
 - whereas the SQL command `CREATE DATABASE` is executed from the psql console. 
 
-​```mysql
+```mysql
 sql_book=# CREATE DATABASE another_database;
 CREATE DATABASE
 sql_book=#
 ```
 
 - on line 1 we execute the `CREATE DATABASE` SQL command and pass the new databases name `another_database`. be sure to terminate the statement with a semi-colon
+- command prompt changes from a `=#` to a `-#` when it is still waiting to finish the statement
 - on line 2 `CREATE DATABASE` is the response returned from PostgreSQL to let us know that the statement was executed successfully
 - On line 3 a new prompt awaits ready to issue a new command
 
@@ -86,8 +87,6 @@ Aside from the name, we can pass additional arguments to the `CREATE DATABASE` c
 - etc.
 
 When omitted SQL will use default settings for these parameters
-
-
 
 #### Convention: uppercase commands, Lowercase names
 
@@ -109,6 +108,18 @@ when naming a database:
 
 
 ### Connecting to a database
+
+to connect to a database in the command line type the following:
+
+```
+psql -d sql_book
+```
+
+if the database name is the 1st argument to the `psql` command, we can omit the `-d`. Some documentation uses it / others don't.
+
+```
+psql sql_book
+```
 
 when we are in the psql console we can connect to a different database using the `\c` or `\connect` meta-commands:
 
@@ -148,10 +159,26 @@ yet_another_database=#
 - line 1 indicates the SQL statement
 - line 2 indicates the response returned by PostgreSQL to let us know the statement executed was successful
 - line 3 prompts the user again for more commands
+- You cannot drop a database whilst still connected to it
 
 `dropdb` is the alias to `DROP DATABASE` and works the same when outside the psql console in command line. `dropdb` acts as a wrapper for `DROP DATABASE`
 
 **caution:** treat the above commands with extreme care as their actions are permanent and irreversible. All data and schema related to the database is deleted. Think before issuing these commands.
+
+### Useful `psql` commands
+
+| Meta Command | Description                                                  | Example               |
+| :----------- | :----------------------------------------------------------- | :-------------------- |
+| `\c $dbname` | **C**onnect to database `$dbname`.                           | `\c blog_development` |
+| `\d`         | **D**escribe available relations (lists all tables and sequences) |                       |
+| `\d $name`   | **D**escribe relation `$name` (schema of a table)            | `\d users`            |
+| `\?`         | List of console commands and options                         |                       |
+| `\h`         | List of available SQL syntax **H**elp topics                 |                       |
+| `\h $topic`  | SQL syntax **H**elp on syntax for `$topic`                   | `\h INSERT`           |
+| `\q`         | **Q**uit                                                     |                       |
+| \l           | lists all the databases that are available in the server you're connected to |                       |
+| \dt          | describes all tables                                         |                       |
+| \ds          | describes all sequences                                      |                       |
 
 ### Summary
 
@@ -262,8 +289,10 @@ in our above example:
 
 - **serial:** auto-incrementing integer identifiers that cannot contain a null value. They're used to create identifier columns for a PostgreSQL database
   - as of v.10 of Postgres `IDENTITY` is the new syntax for handling auto-incrementing values. Using `serial` is no longer recommended for new apps. `serial` is said to have compatibility and permission management issues
+  - `serial` also adds the `NOT NULL` constraint
 - **char(N): **data strings of up to N characters in length. If a string less than N is stored it is filled up with space characters
 - **varchar(N):** data strings of up to N characters in length. If a string less than N is stored, the remaining string length isn't used
+  - `varchar`, `character varying` and `text` are all aliases
 - **boolean:** data type that only has 2 values `true` or `false`. PostgreSQL can use the shorthand formant `t` or `f`
 - **integer or INT:** a non-decimal whole number that can be negative or positive
 - **decimal(precision, scale):** decimals take 2 arguments, the first is the total number of digits on both sides of the decimal (the precision), the second is the number of digits on the fractional part (to the right) of the decimal (the scale). eg. 50.00(4, 2)
@@ -501,6 +530,20 @@ DROP TABLE table_name
 ```
 
 `DROP COLUMN` and `DROP TABLE` are irreversible and should be cautiously used. Bear in mind if you delete the schema or table you permanently lose all data it contained.
+
+to prevent errors you can drop tables with an if statement:
+
+```sqlite
+DROP TABLE IF EXISTS birds;
+```
+
+or drop multiple tables:
+
+```sqlite
+DROP TABLE birds, reptiles;
+```
+
+
 
 
 

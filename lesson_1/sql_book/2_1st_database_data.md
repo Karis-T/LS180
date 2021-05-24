@@ -260,6 +260,22 @@ in the example above:
 - If its unavoidable double quote the identifier in the statement
   - eg. `year` is a reserved word so we must type `"year"` if we want it as an identifier
 
+If you add parentheses to your query all data is grouped together in 1 column:
+
+```sqlite
+SELECT (id,name,age,species) FROM birds;
+          row
+-----------------------
+ (1,Charlie,3,Finch)
+ (2,Allie,5,Owl)
+ (3,Jennifer,3,Magpie)
+ (4,Jamie,4,Owl)
+ (5,Roy,8,Crow)
+(5 rows)
+```
+
+
+
 ### `ORDER BY`
 
 displays the result of a query in a particular sort order
@@ -595,6 +611,8 @@ WHERE (expression);
 - The `WHERE` clause it optional and if omitted PostgreSQL will update every row in the target table
   - Because of this the expression to the `WHERE` clause needs to be restrictive / specific enough to only target the rows you want to modify
   - Test your clause using `SELECT` first before using `UPDATE`
+- you can `SET` 1 or more column values with the `UPDATE` statement
+- `WHERE` selects the rows that need to be updated
 
 #### update specific rows
 

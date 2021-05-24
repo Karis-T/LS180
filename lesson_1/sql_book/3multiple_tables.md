@@ -90,7 +90,7 @@ To act as a unique identifier a column must contain:
 
 - some data
 - the data must be unique to each row (sort of like ids)
-- making a column a `PRIMARY KEY` is similar to adding `NOT NULL` and `UNIQUE` constraints to that column
+- making a column a `PRIMARY KEY` adds the `NOT NULL` and `UNIQUE` constraints to that column
 
 Since the `id` column fits the above description, we can add it as a primary key:
 

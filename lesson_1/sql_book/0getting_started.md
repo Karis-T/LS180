@@ -468,6 +468,16 @@ PostgreSQL knows how to return the right information, and knows the difference b
 
 Schema and data work together to let us interact with a database in a structured, useful way. Without schema we would have the unstructured data mentioned before, and without data we would have an array of empty tables.
 
+### Using Documentation
+
+- make sure you're looking at the documentation version based on your PostgreSQL version 
+- use the search bar to type in what you're looking for
+- in documentation codeblocks:
+  - anything inside square brackets is optional
+  - anything outside square brackets is required
+  - Curly braces means you have to choose at least one of the actions in the curly brackets (either or)
+  - bold italicized text means there will be more info about that term later on in the page
+
 ### Summary
 
 - basic SQL statements using `SELECT` to retrieve data from a database
