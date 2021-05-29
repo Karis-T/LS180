@@ -571,6 +571,7 @@ ERROR:  column "users.full_name" must appear in the GROUP BY clause or be used i
 - or be the result of an aggregate function
 - or the `GROUP BY` clause must be based on the primary key
 - this is to ensure that theres a single value for every column in the result
+- while `GROUP BY` must specify all columns when using an aggregate function like `COUNT` we can ignore this rule when using `GROUP BY` with the tables primary key
 
 
 
