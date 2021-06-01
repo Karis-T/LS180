@@ -111,6 +111,19 @@ ALTER TABLE users ADD PRIMARY KEY (id);
 FOREIGN KEY (fkey_column_name) REFERENCES target_table_name (pkey_column_name)
 ```
 
+creating a table with a FOREIGN KEY:
+
+```sqlite
+CREATE TABLE moons (
+  id serial PRIMARY KEY,
+  designation integer NOT NULL CHECK (designation > 0),
+  semi_major_axis numeric CHECK (semi_major_axis > 0.0),
+  mass numeric CHECK (mass > 0.0);
+  planet_id integer NOT NULL REFERENCES planets (id)
+);
+
+```
+
 ![Shapes and Colors, separate tables](https://d186loudes4jlv.cloudfront.net/sql/images/table_relationships/joins-explanation-separate-tables.png)
 
 The above shows 2 tables `colors` and `shapes`. `shapes` `color_id` column is a Foreign Key that references the data of the column `id` in the `colors` table. It results in the following associations:

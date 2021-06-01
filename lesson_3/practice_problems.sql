@@ -61,4 +61,38 @@ INSERT INTO reviews (review, product_id)
          ('could have been smaller', 2);
 
 -- 10
-false - foreign key columns allow NULL values. Use NOT NULL and foreign key constraints together; 
+false - foreign key columns allow NULL values. Use NOT NULL and foreign key constraints together;
+
+/* Practice problems 3 */
+-- 1
+INSERT INTO calls ("when", duration, contact_id)
+  VALUES ('2016-01-18 14:47:00', 632, 6);
+
+-- 2
+SELECT calls.when, calls.duration, contacts.first_name FROM calls JOIN contacts
+  ON calls.contact_id = contacts.id WHERE contacts.id != 6;
+
+SELECT calls.when, calls.duration, contacts.first_name FROM calls JOIN contacts
+  ON calls.contact_id = contacts.id WHERE (contacts.first_name || ' ' || contacts.last_name) != 'William Swift';
+
+-- 3
+INSERT INTO contacts (first_name, last_name, number)
+  VALUES ('Merve', 'Elk', '6343511126'),
+         ('Sawa', 'Fyodorov', '6125594874');
+
+INSERT INTO calls ("when", duration, contact_id)
+  VALUES ('2016-01-17 11:52:00', 175, 26),
+         ('2016-01-18 21:22:00', 79, 27);
+
+-- 4
+ALTER TABLE contacts ADD CONTSTRAINT number_unique UNIQUE (number);
+
+-- 5
+ERROR:  duplicate key value violates unique constraint "number_unique"
+DETAIL:  Key (number)=(6125594874) already exists.
+
+-- 6
+when is a reserved keyword that forms part of case statement
+non-reserved words can be used in table / column names but are known to the SQL parser and have a special meaning
+
+if you get parser errors for commands that contain keywords try to add double quotes to see if the problem goes away

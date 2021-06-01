@@ -304,6 +304,15 @@ in our above example:
 - Although PostgreSQL boolean values display as `t` or `f` in the results of a `SELECT` query, `t` and `f` are not valid literal boolean values unless used in single quote marks: `'t'`, `'f'`. 
 - Other acceptable literals are `true` or `false` without quote marks; or `'t'`, `'true'`, `'y'`, `'yes'`, `'on'`, `'1`' with quote marks for `true`, and `'f'`, `'false'`, `'n'`, `'no'`, `'off'`, `'0'` with quote marks for `false`.
 
+#### Convert data types
+
+```sqlite
+CAST ( expression AS type )
+expression::type
+```
+
+> The `CAST` syntax conforms to SQL; the syntax with `::` is historical PostgreSQL usage. When a cast is applied to a value expression of a known type, it represents a run-time type conversion. The cast will succeed only if a suitable type conversion operation has been defined.
+
 ### Keys and Constraints
 
 Constraints are extremely useful and while they aren't mandatory like data types are, you'll want to add some type of constraint to your columns.
@@ -479,7 +488,11 @@ ALTER TABLE table_name ADD constraint_clause;
 
 multiple comma separated `ALTER COLUMN` actions can be combined under 1 `ALTER TABLE` statement:
 
-
+```sqlite
+ALTER TABLE stars
+ADD CHECK (spectral_type IN ('O', 'B', 'A', 'F', 'G')),
+ALTER COLUMN spectral_type SET NOT NULL;
+```
 
 ### Removing a constraint
 
